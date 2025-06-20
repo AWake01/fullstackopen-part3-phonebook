@@ -24,8 +24,16 @@ const data = [
 const express = require('express')
 const app = express()
 
-app.get('/api/persons', (request, respose) => {
-    respose.send(data)
+app.get('/info', (request, response) => {
+    const date = new Date()
+    response.send(`
+        <p>Phonebook has info for ${data.length} people<p> 
+        <p>${date}</p>
+    `)
+})
+
+app.get('/api/persons', (request, response) => {
+    response.send(data)
 })
 
 const PORT = 3001
