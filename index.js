@@ -1,4 +1,4 @@
-const data = [
+let data = [
     { 
       "id": "1",
       "name": "Arto Hellas", 
@@ -24,6 +24,8 @@ const data = [
 const express = require('express')
 const app = express()
 
+//GET
+//info
 app.get('/info', (request, response) => {
     const date = new Date()
     response.send(`
@@ -32,8 +34,28 @@ app.get('/info', (request, response) => {
     `)
 })
 
+//all
 app.get('/api/persons', (request, response) => {
     response.send(data)
+})
+
+//by id
+app.get('/api/persons/:id', (request, response) => {
+    const id = request.params.id
+    const person = data.find(person => person.id === id)
+    console.log('ID: ', id)
+
+    if(person) { response.json(person) }
+    else { response.status(404).end()}  //404 Not Found
+})
+
+//DELETE
+//by id
+app.delete('/api/persons/:id', (request, response) => {
+    const id = request.params.id
+    data = data.filter(person => person.id !== id)
+
+    response.status(204).end()  //204 No Content
 })
 
 const PORT = 3001
