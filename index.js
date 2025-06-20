@@ -24,6 +24,8 @@ let data = [
 const express = require('express')
 const app = express()
 
+app.use(express.json())
+
 //GET
 //info
 app.get('/info', (request, response) => {
@@ -57,6 +59,18 @@ app.delete('/api/persons/:id', (request, response) => {
 
     response.status(204).end()  //204 No Content
 })
+
+//POST
+//person
+app.post('/api/persons', (request, response) => {
+    const id = Math.floor(Math.random() * 999999)
+
+    const person = request.body
+    person.id = id
+    data.concat(person)
+    console.log(person)
+})
+
 
 const PORT = 3001
 app.listen(PORT, () => {
