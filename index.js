@@ -38,11 +38,25 @@ const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
 }
 
+// //morgan.format(function (tokens, req, res) {
+//     return [
+//         tokens.method(req, res),
+//         tokens.url(req, res),
+//         tokens.status(req, res),
+//         tokens.data(req, res),
+//         tokens['response-time'](req, res), 'ms'
+//     ].join('')
+// }
+
+morgan.token('body', function (req, res) { 
+    console.log(JSON.stringify(req.body))
+    return JSON.stringify(req.body)
+})
+
 app.use(express.json())
 //app.use(requestLogger)
-app.use(morgan('tiny'))
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :response-time ms :body'))
 app.use(unknownEndpoint)
-let logger = morgan('tiny')
 
 //GET
 //info
