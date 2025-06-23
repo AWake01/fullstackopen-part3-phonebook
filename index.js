@@ -27,6 +27,7 @@ const cors = require('cors')
 const app = express()
 
 app.use(cors())
+app.use(express.static('dist')) //Static access to frontend production build
 
 //MIDDLEWARE
 const requestLogger = (request, response, next) => {
