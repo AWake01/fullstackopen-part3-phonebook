@@ -22,9 +22,11 @@ let data = [
 ]
 
 const express = require('express')
-const cors = require('cors')
 var morgan = require('morgan')
+const cors = require('cors')
 const app = express()
+
+app.use(cors())
 
 //MIDDLEWARE
 const requestLogger = (request, response, next) => {
@@ -38,16 +40,7 @@ const requestLogger = (request, response, next) => {
 const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
 }
-
-// //morgan.format(function (tokens, req, res) {
-//     return [
-//         tokens.method(req, res),
-//         tokens.url(req, res),
-//         tokens.status(req, res),
-//         tokens.data(req, res),
-//         tokens['response-time'](req, res), 'ms'
-//     ].join('')
-// }
+//app.use(unknownEndpoint)
 
 morgan.token('body', function (req, res) { 
     console.log(JSON.stringify(req.body))
@@ -57,7 +50,6 @@ morgan.token('body', function (req, res) {
 app.use(express.json())
 //app.use(requestLogger)
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :response-time ms :body'))
-app.use(unknownEndpoint)
 
 //GET
 //info
@@ -106,10 +98,6 @@ app.post('/api/persons', (request, response) => {
             error: 'name or number missing'
         })  //400 No Content
     }
-
-    //const name = newPerson.name
-    //const found = data.find(person => person.name === newPerson.name)
-    //console.log(found)
     
     if(data.find(person => person.name === newPerson.name)) {
          return response.status(400).json({
@@ -123,7 +111,7 @@ app.post('/api/persons', (request, response) => {
 })
 
 //SERVER
-const PORT = 3001
+const PORT = process.env.port || 3001
 app.listen(PORT, () => {
     console.log(`@Server running on ${PORT}`)
 })
