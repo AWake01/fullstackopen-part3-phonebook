@@ -20,9 +20,9 @@ let data = [
       "number": "39-23-6423122"
     }
 ]
-
 const express = require('express')
 var morgan = require('morgan')
+const Person = require('./models/person')
 const app = express()
 
 app.use(express.static('dist')) //Static access to frontend production build
@@ -62,17 +62,17 @@ app.get('/info', (request, response) => {
 
 //all
 app.get('/api/persons', (request, response) => {
-    response.send(data)
+    Person.find({}).then(persons => {
+    response.json(persons)
+  })
 })
 
 //by id
 app.get('/api/persons/:id', (request, response) => {
-    const id = request.params.id
-    const person = data.find(person => person.id === id)
-    console.log('ID: ', id)
-
-    if(person) { response.json(person) }
-    else { response.status(404).end()}  //404 Not Found
+    Person.findById(request.params.id).then(person => {
+        response.json(person)
+        // mongoose.connection.close() //Must be closed here
+    })
 })
 
 //DELETE
@@ -87,30 +87,25 @@ app.delete('/api/persons/:id', (request, response) => {
 //POST
 //person
 app.post('/api/persons', (request, response) => {
-    const id = Math.floor(Math.random() * 999999)
-
-    const newPerson = request.body
-
-    if(!newPerson.name || !newPerson.number){
-        console.log('name or number missing')
-        return response.status(400).json({
-            error: 'name or number missing'
-        })  //400 No Content
-    }
-    
-    if(data.find(person => person.name === newPerson.name)) {
-         return response.status(400).json({
-            error: 'name must be unique'
-        })  //400 No Content
+    const body = request.body
+    console.log('body', body)
+    if (!body.name) {
+        return response.status(400).json({ error: 'content missing' })
     }
 
-    newPerson.id = id
-    data = data.concat(newPerson)
-    console.log(newPerson)
+    const newPerson = new Person({
+        name: body.name,
+        number: body.number,
+    })
+ 
+    newPerson.save().then(savedPerson  => {
+         response.json(savedPerson)
+         console.log('response', response)
+    })
 })
 
 //SERVER
-const PORT = process.env.port || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
     console.log(`@Server running on ${PORT}`)
 })

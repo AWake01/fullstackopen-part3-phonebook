@@ -9,6 +9,7 @@ if (process.argv.length < 3) {
 const password = process.argv[2]
 const url = `mongodb+srv://fullstackSW:${password}@fullstack-open-test.l3ingiu.mongodb.net/phonebook?retryWrites=true&w=majority&appName=fullstack-open-test`
 mongoose.set('strictQuery',false)
+mongoose.connect(url)
 
 const personSchema = new mongoose.Schema({
     name: String,
