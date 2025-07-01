@@ -41,6 +41,16 @@ const unknownEndpoint = (request, response) => {
 }
 //app.use(unknownEndpoint)
 
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+
+    if(error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+
+    next(error)
+}
+
 morgan.token('body', function (req, res) { 
     console.log(JSON.stringify(req.body))
     return JSON.stringify(req.body)
@@ -49,6 +59,9 @@ morgan.token('body', function (req, res) {
 app.use(express.json())
 //app.use(requestLogger)
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :response-time ms :body'))
+app.use(errorHandler)    //Loaded last
+
+//ROUTES
 
 //GET
 //info
@@ -68,40 +81,63 @@ app.get('/api/persons', (request, response) => {
 })
 
 //by id
-app.get('/api/persons/:id', (request, response) => {
-    Person.findById(request.params.id).then(person => {
-        response.json(person)
-        // mongoose.connection.close() //Must be closed here
-    })
+app.get('/api/persons/:id', (request, response, next) => {
+    Person.findById(request.params.id)
+        .then(person => {
+            if(person) {
+                response.json(person)
+            }
+            else {
+                response.status(404).end()
+            }
+        })
+        .catch(error =>  next(error))
 })
 
 //DELETE
 //by id
-app.delete('/api/persons/:id', (request, response) => {
-    const id = request.params.id
-    data = data.filter(person => person.id !== id)
+app.delete('/api/persons/:id', (request, response, next) => {
+    Person.findByIdAndDelete(request.params.id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => next(error))
+})
 
-    response.status(204).end()  //204 No Content
+//PUT
+//update
+app.put('/api/persons/:id', (request, response, next) => {
+    const { name, number } = request.body
+
+    Person.findById(request.params.id)
+        .then(person => {
+            if(!person) {
+                console.log('no person found')
+                return response.status(404).end()
+            }
+
+            person.name = name
+            person.number = number
+
+            return person.save().then((updatedperson) => {
+                response.json(updatedperson)
+            })
+        })
+        .catch(error => next(error))
 })
 
 //POST
-//person
-app.post('/api/persons', (request, response) => {
-    const body = request.body
-    console.log('body', body)
-    if (!body.name) {
-        return response.status(400).json({ error: 'content missing' })
-    }
-
-    const newPerson = new Person({
-        name: body.name,
-        number: body.number,
+//create
+app.post('/api/persons', (request, response, next) => {
+    const person  = new Person({
+        name: request.body.name,
+        number: request.body.number
     })
- 
-    newPerson.save().then(savedPerson  => {
-         response.json(savedPerson)
-         console.log('response', response)
+    
+    return person.save().then((updatedperson) => {
+        //response.json(updatedPerson)
     })
+    .catch(error => next(error))
 })
 
 //SERVER
