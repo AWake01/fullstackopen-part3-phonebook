@@ -25,8 +25,6 @@ var morgan = require('morgan')
 const Person = require('./models/person')
 const app = express()
 
-app.use(express.static('dist')) //Static access to frontend production build
-
 //MIDDLEWARE
 const requestLogger = (request, response, next) => {
     console.log('method', request.method)
@@ -39,15 +37,17 @@ const requestLogger = (request, response, next) => {
 const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
 }
-//app.use(unknownEndpoint)
 
 const errorHandler = (error, request, response, next) => {
     console.error(error.message)
+    console.log('Name: ', error.name)
 
     if(error.name === 'CastError') {
         return response.status(400).send({ error: 'malformatted id' })
+    } else if(error.name === 'ValidationError') {
+        console.log("Validation: ", error.message)
+        return response.status(400).json({ error: error.message })
     }
-
     next(error)
 }
 
@@ -56,10 +56,11 @@ morgan.token('body', function (req, res) {
     return JSON.stringify(req.body)
 })
 
+//MIDDLEWARE LOADING - pre route definition
+app.use(express.static('dist')) //Static access to frontend production build
 app.use(express.json())
-//app.use(requestLogger)
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :response-time ms :body'))
-app.use(errorHandler)    //Loaded last
+app.use(requestLogger)
+//app.use(morgan(':method :url :status :res[content-length] - :response-time ms :response-time ms :body'))
 
 //ROUTES
 
@@ -144,11 +145,16 @@ app.post('/api/persons', (request, response, next) => {
         number: request.body.number
     })
     
-    return person.save().then((updatedperson) => {
-        //response.json(updatedPerson)
-    })
-    .catch(error => next(error))
+    person.save()
+        .then((newPerson) => {
+            response.json(newPerson)
+        })
+        .catch(error => next(error))
 })
+
+//MIDDLEWARE LOADING - post route definition
+app.use(unknownEndpoint)
+app.use(errorHandler)    //Loaded last
 
 //SERVER
 const PORT = process.env.PORT
