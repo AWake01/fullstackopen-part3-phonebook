@@ -65,10 +65,20 @@ app.use(errorHandler)    //Loaded last
 
 //GET
 //info
-app.get('/info', (request, response) => {
+app.get('/api/info', async (request, response) => {
     const date = new Date()
+
+     const count = await Person.countDocuments()
+        .then((count) => {
+            console.log("Count :", count)
+            return count
+        })
+        .catch((error) => {
+            console.log('Error: ', error)
+        });
+
     response.send(`
-        <p>Phonebook has info for ${data.length} people<p> 
+        <p>Phonebook has info for ${count} people<p> 
         <p>${date}</p>
     `)
 })
